@@ -1,0 +1,3 @@
+RUST_LOG=info
+SESSION_ID=muchsecretwow
+INSTANCE_TYPES_OF_INTEREST="gpu.1x.a100, gpu.8x.a100"
