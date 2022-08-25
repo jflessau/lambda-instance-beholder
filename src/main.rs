@@ -16,8 +16,8 @@ fn main() {
     builder.init();
 
     let instance_types_of_interest: Vec<String> = env::var("INSTANCE_TYPES_OF_INTEREST")
-        .unwrap_or("".to_string())
-        .split(",")
+        .unwrap_or_else(|_| "".to_string())
+        .split(',')
         .into_iter()
         .map(|v| v.trim().to_string())
         .collect::<Vec<String>>();
@@ -50,7 +50,7 @@ fn main() {
 
 fn refresh_instance_types(
     current_instance_types: &mut HashMap<String, bool>,
-    instance_types_of_interest: &Vec<String>,
+    instance_types_of_interest: &[String],
 ) -> Result<(), Error> {
     debug!("current_instance_types: {:?}", current_instance_types);
     let mut updates = Vec::new();
