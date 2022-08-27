@@ -22,37 +22,44 @@ fn main() {
         .map(|v| v.trim().to_string())
         .collect::<Vec<String>>();
 
-    info!(
-        "instance types of interest: {:?}",
-        instance_types_of_interest
-    );
-
     if instance_types_of_interest.is_empty() {
         warn!("no instance types of interest provided");
         return;
     }
 
     let mut instance_types: HashMap<String, bool> = HashMap::new();
+    let mut print_instance_type_list = true;
 
     loop {
-        match refresh_instance_types(&mut instance_types, &instance_types_of_interest) {
-            Err(err) => error!("failed to refresh instance types, error: {}", err),
-            Ok(updates) => {
-                debug!("updates: {:?}", updates);
+        match refresh_instance_types(
+            &mut instance_types,
+            &instance_types_of_interest,
+            print_instance_type_list,
+        ) {
+            Err(err) => {
+                error!("failed to refresh instance types, error: {}", err);
+                break;
+            }
+            Ok(_) => {
+                debug!("refresh_instance_types completed successfully");
             }
         }
 
-        let grace_period = time::Duration::from_secs(30);
-        info!("will refresh in {} seconds", grace_period.as_secs());
+        let grace_period = time::Duration::from_secs(5 * 60);
+        info!("will refresh in {} seconds...", grace_period.as_secs());
         thread::sleep(grace_period);
+
+        print_instance_type_list = false;
     }
 }
 
 fn refresh_instance_types(
     current_instance_types: &mut HashMap<String, bool>,
     instance_types_of_interest: &[String],
+    print_instance_type_list: bool,
 ) -> Result<(), Error> {
     debug!("current_instance_types: {:?}", current_instance_types);
+
     let mut updates = Vec::new();
     let cookie_str = env::var("SESSION_ID").expect("SESSION_ID not set");
 
@@ -70,14 +77,36 @@ fn refresh_instance_types(
 
     let response = client
         .get("https://lambdalabs.com/api/cloud/vm-availability")
-        .send()?
-        .text()?;
+        .send()?;
 
-    let response: Response = serde_json::from_str(&response)?;
+    let response_status = response.status();
+    let response_text = response.text()?;
+
+    if response_status == reqwest::StatusCode::from_u16(401)? {
+        anyhow::bail!("unauthorized: check your SESSION_ID");
+    } else if response_status != reqwest::StatusCode::from_u16(200)? {
+        anyhow::bail!("calling api fails with status code {}", response_status);
+    }
+
+    let response: Response = serde_json::from_str(&response_text)?;
 
     debug!("response: {:?}", response);
 
     if let Value::Object(ref new_instance_types) = response.data {
+        if print_instance_type_list {
+            info!(
+                "all instance types: {:?}",
+                new_instance_types
+                    .iter()
+                    .map(|(k, _)| k.to_string())
+                    .collect::<Vec<String>>()
+            );
+            info!(
+                "instance types of interest: {:?}",
+                instance_types_of_interest
+            );
+        }
+
         new_instance_types.iter().for_each(|(k, new_available)| {
             let new_available = match new_available {
                 Value::Bool(v) => *v,
@@ -89,14 +118,12 @@ fn refresh_instance_types(
                     debug!("add update for: {}", k);
                     updates.push((k.to_string(), new_available));
                 }
-                debug!("update {}", k);
                 *old_available = new_available
             } else {
                 if instance_types_of_interest.contains(k) {
                     debug!("add update for: {}", k);
                     updates.push((k.to_string(), new_available));
                 }
-                debug!("insert {}", k);
                 current_instance_types.insert(k.to_string(), new_available);
             }
         });
@@ -104,18 +131,21 @@ fn refresh_instance_types(
 
     for update in &updates {
         info!(
-            "Instance type {} is {}",
+            "{} {} is {}",
+            if update.1 { "✅" } else { "🚫" },
             update.0,
             if update.1 {
                 "now available!"
             } else {
-                "not available :("
+                "not available"
             },
         );
     }
 
     if !updates.is_empty() {
         play_sound()?;
+    } else {
+        info!("nothing changed...")
     }
 
     Ok(())
