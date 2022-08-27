@@ -3,7 +3,7 @@
 Checks available instance types on Lambda GPU Cloud.  
 Provide a list of relevant instance types and this program will log changes and play a "ping"-sound when availability changes.
 
-If you are from Lambda Labs and don't want this to exists: Please message me via the issue tracker :)
+If you are from Lambda and don't want this to exists: Please message me via the issue tracker :)
 
 ## Usage
 
