@@ -40,4 +40,4 @@ jobs:
           override: true
       - name: cargo clippy
         run: |
-          cd environment && cargo clippy -- --D warnings
+          cargo clippy -- --D warnings

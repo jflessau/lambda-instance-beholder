@@ -1,3 +1,3 @@
 RUST_LOG=info
 SESSION_ID=muchsecretwow
-INSTANCE_TYPES_OF_INTEREST="gpu.1x.a100, gpu.8x.a100"
+INSTANCE_TYPES_OF_INTEREST="gpu.1x.a100, gpu.1x.a6000, gpu.1x.rtx6000, gpu.2x.a100, gpu.2x.a6000, gpu.4x.a100, gpu.4x.a6000, gpu.8x.a100, gpu.8x.v100"
