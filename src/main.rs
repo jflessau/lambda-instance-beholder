@@ -151,7 +151,7 @@ fn refresh_instance_types(
     Ok(())
 }
 
-#[derive(Default, Debug, Clone, PartialEq, Serialize, Deserialize)]
+#[derive(Default, Debug, Clone, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct Response {
     pub error: Value,
