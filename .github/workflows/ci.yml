@@ -9,7 +9,7 @@ on:
 
 jobs:
   check_formatting:
-    name: 'Check Formatting'
+    name: "Check Formatting"
     runs-on: ubuntu-latest
     steps:
       - name: checkout
@@ -26,7 +26,7 @@ jobs:
           cargo fmt --all -- --check
 
   linting:
-    name: 'Linting'
+    name: "Linting"
     runs-on: ubuntu-latest
     steps:
       - name: checkout
@@ -40,4 +40,4 @@ jobs:
           override: true
       - name: cargo clippy
         run: |
-          sudo apt install librust-alsa-sys-dev && cargo clippy -- --D warnings
+          cargo clippy -- --D warnings
